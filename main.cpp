@@ -71,6 +71,7 @@ void createAllProcesses() {
 }
 
 int simulateProcesses() {
+
 	bool flagRunSimulation = true; 	// the variable is false when the simulation has finished
 	int currentCycle = 0; 			// the cycle that is now simulated
 	int cyclesUntilProcFinish = 0; 	// the number of cycles remaining until the current executing process finishes computing
@@ -83,20 +84,20 @@ int simulateProcesses() {
 	if (pArray[0].memFootprint <= availableMemory) { // check to see that we have enough memory,
 		
 		allocatedMemory = malloc(pArray[0].memFootprint * 1024); // beacuse memFootPrint represents the amount of memory in KB and 1KB = 1024B
-		if (allocatedMemory == NULL){
+		if (allocatedMemory == NULL) {
 			cout << "Error allocating memory for the process with pid " << pArray[0].processId << endl;
 			return -2; // return error code -2
 		}
 		availableMemory -= pArray[0].memFootprint;
 		indexOfCurrentlyExecutingProcess = 0;
 	}
-	else{
+	else {
 		cout << "Error allocating memory for the first process with pid " << pArray[0].processId << endl;
 		return -1; // return error code -1(not enough memory for the first process)
 	}
 
-	while (flagRunSimulation == true){
-		if (currentCycle % 50 == 0 && ((currentCycle / 50) < numProcessesRequired)){
+	while (flagRunSimulation == true) {
+		if (currentCycle % 50 == 0 && ((currentCycle / 50) < numProcessesRequired)) {
 			int numberOfArrivingProcess = currentCycle / 50; // the number of the process that has arrived
 			cout << "Process with pid = " << pArray[numberOfArrivingProcess].processId << " has arrived at the " << currentCycle << " cycle.  It has a memory footprint of " <<
 				pArray[numberOfArrivingProcess].memFootprint << " and it requires " << pArray[numberOfArrivingProcess].cpuCycles << " cpu cycles to compute" << endl;
@@ -104,32 +105,30 @@ int simulateProcesses() {
 		}
 		++currentCycle;
 		--cyclesUntilProcFinish;
-		if (cyclesUntilProcFinish == 0){
+		if (cyclesUntilProcFinish == 0) {
 			free(allocatedMemory);
 			allocatedMemory = NULL;
-			availableMemory += pArray[indexOfCurrentlyExecutingProcess].memFootprint; // retrive memory
+			availableMemory += pArray[indexOfCurrentlyExecutingProcess].memFootprint; // retrieve memory
 			cout << "\tProcess with pid = " << pArray[indexOfCurrentlyExecutingProcess].processId << " has finished computing in the cycle " << currentCycle << "\n\n";
-			if (indexOfCurrentlyExecutingProcess == (numProcessesRequired - 1)){
+			if (indexOfCurrentlyExecutingProcess == (numProcessesRequired - 1)) {
 				clock_t end = clock();
 				float systemTime = (float)(end - start) / CLOCKS_PER_SEC;
 				cout << "Total system time = " << systemTime << " seconds" << endl;
 				cout << "Number of processor cycles required to compute all the processes = " << currentCycle << endl;
 				flagRunSimulation = false;
 			}
-			else{ // the currently executing project has finished, and the next process from the waiting queue must start
-				
-				
+			else { // the currently executing project has finished, and the next process from the waiting queue must start
 				indexOfCurrentlyExecutingProcess++;
 				cyclesUntilProcFinish = pArray[indexOfCurrentlyExecutingProcess].cpuCycles;
-				if (pArray[indexOfCurrentlyExecutingProcess].memFootprint <= availableMemory){ // check to see that we have enough memory,
+				if (pArray[indexOfCurrentlyExecutingProcess].memFootprint <= availableMemory) { // check to see that we have enough memory,
 					allocatedMemory = malloc(pArray[indexOfCurrentlyExecutingProcess].memFootprint * 1024); // beacuse memFootPrint represents the amount of memory in KB and 1KB = 1024B
-					if (allocatedMemory == NULL){
+					if (allocatedMemory == NULL) {
 						cout << "Error allocating memory for the process with pid " << pArray[indexOfCurrentlyExecutingProcess].processId << endl;
 						return -2; // return error code -2
 					}
 					availableMemory -= pArray[indexOfCurrentlyExecutingProcess].memFootprint;
 				}
-				else{
+				else {
 					cout << "Error allocating memory for the process with pid " << pArray[indexOfCurrentlyExecutingProcess].processId << endl;
 					return -1; // return error code -1(not enough memory for the first process)
 				}
@@ -139,8 +138,8 @@ int simulateProcesses() {
 
 	}
 
-
 	return 0; // succesful function execution
+
 }
 
 int main(int argc, char **argv) {
@@ -159,7 +158,6 @@ int main(int argc, char **argv) {
 
 	createAllProcesses();
 	
-
 	simulateProcesses();
 
 	// Cleanup
