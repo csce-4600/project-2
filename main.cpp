@@ -2,9 +2,11 @@
 #include <random>
 #include <cstdio>
 #include <ctime>
+#include <unistd.h>
 
 using namespace std;
 
+// Random value generator; uses normal distribution for random values
 class Generator {
 	default_random_engine generator;
 	normal_distribution<double> distribution;
@@ -37,8 +39,9 @@ int numProcessesRequired;
 // Where all processes will be stored
 process* pArray;
 
+// Random value generator
 Generator randCycle(6000.0, 2000.0, 1000.0, 11000.0);
-Generator randMemFootprint(20.0, 10.0, 1.0, 100.0);
+Generator randMemFootprint(100.0, 50.0, 1.0, 200.0);
 
 int getProcessID() {
 	return init_pid++;
@@ -51,6 +54,7 @@ void printAllProcesses(process* p) {
 
 }
 
+// Set values for each individual process
 process createProcess() {
 
 	process p;
@@ -65,6 +69,7 @@ process createProcess() {
 
 void createAllProcesses() {
 
+	// Loops until all processes are initialized with mem and cycle values
 	for (int i = 0; i < numProcessesRequired; i++)
 		pArray[i] = createProcess();
 
@@ -78,6 +83,7 @@ int simulateProcesses() {
 	int availableMemory = 10240; 	// the amount of available memory remaining in KB; at first, we have 10Mb = 10 * 1024 KB = 10240KB
 	int indexOfCurrentlyExecutingProcess = 0; 
 	void *allocatedMemory = NULL;
+	clock_t processExecutionStart, processExecutionEnd; // used to measure how much time a process spends.
 
 	clock_t start = clock();
 	cyclesUntilProcFinish = pArray[0].cpuCycles;
@@ -90,6 +96,7 @@ int simulateProcesses() {
 		}
 		availableMemory -= pArray[0].memFootprint;
 		indexOfCurrentlyExecutingProcess = 0;
+		processExecutionStart = clock(); // the first process has started executing
 	}
 	else {
 		cout << "Error allocating memory for the first process with pid " << pArray[0].processId << endl;
@@ -97,11 +104,12 @@ int simulateProcesses() {
 	}
 
 	while (flagRunSimulation == true) {
+		usleep(1000); // sleep 1 milisecond per cycle
 		if (currentCycle % 50 == 0 && ((currentCycle / 50) < numProcessesRequired)) {
 			int numberOfArrivingProcess = currentCycle / 50; // the number of the process that has arrived
-			cout << "Process with pid = " << pArray[numberOfArrivingProcess].processId << " has arrived at the " << currentCycle << " cycle.  It has a memory footprint of " <<
-				pArray[numberOfArrivingProcess].memFootprint << " and it requires " << pArray[numberOfArrivingProcess].cpuCycles << " cpu cycles to compute" << endl;
-			cout << "Currently executing process with pid = " << pArray[indexOfCurrentlyExecutingProcess].processId << endl;
+			cout << "PID " << pArray[numberOfArrivingProcess].processId << " arrived at cycle " << currentCycle << ". It has a memory footprint of " <<
+				pArray[numberOfArrivingProcess].memFootprint << " and it requires " << pArray[numberOfArrivingProcess].cpuCycles << " cycles to execute" << endl;
+			cout << "Currently executing PID " << pArray[indexOfCurrentlyExecutingProcess].processId << endl;
 		}
 		++currentCycle;
 		--cyclesUntilProcFinish;
@@ -109,12 +117,19 @@ int simulateProcesses() {
 			free(allocatedMemory);
 			allocatedMemory = NULL;
 			availableMemory += pArray[indexOfCurrentlyExecutingProcess].memFootprint; // retrieve memory
-			cout << "\tProcess with pid = " << pArray[indexOfCurrentlyExecutingProcess].processId << " has finished computing in the cycle " << currentCycle << "\n\n";
+			processExecutionEnd = clock();
+			processExecutionEnd += pArray[indexOfCurrentlyExecutingProcess].cpuCycles * (CLOCKS_PER_SEC / 1000.0);// for the sleeping
+			double processExecTime = (double)(processExecutionEnd - processExecutionStart) / CLOCKS_PER_SEC;
+
+			cout << ">> PID " << pArray[indexOfCurrentlyExecutingProcess].processId << " finished executing in cycle " << currentCycle << ". Execution time: " << processExecTime << " seconds.\n\n";
+
 			if (indexOfCurrentlyExecutingProcess == (numProcessesRequired - 1)) {
 				clock_t end = clock();
-				float systemTime = (float)(end - start) / CLOCKS_PER_SEC;
-				cout << "Total system time = " << systemTime << " seconds" << endl;
-				cout << "Number of processor cycles required to compute all the processes = " << currentCycle << endl;
+				end += currentCycle* (CLOCKS_PER_SEC / 1000.0);// for the sleeping
+				double systemTime = (double)(end - start) / CLOCKS_PER_SEC;
+
+				cout << "Total system time: " << systemTime << " seconds" << endl;
+				cout << "Number of processor cycles required to compute all the processes: " << currentCycle << endl;
 				flagRunSimulation = false;
 			}
 			else { // the currently executing project has finished, and the next process from the waiting queue must start
@@ -132,7 +147,8 @@ int simulateProcesses() {
 					cout << "Error allocating memory for the process with pid " << pArray[indexOfCurrentlyExecutingProcess].processId << endl;
 					return -1; // return error code -1(not enough memory for the first process)
 				}
-				cout << "Starting execution of process with pid " << pArray[indexOfCurrentlyExecutingProcess].processId << " in the cycle " << currentCycle + 1 << endl;
+				cout << "Starting execution of PID " << pArray[indexOfCurrentlyExecutingProcess].processId << " in cycle " << currentCycle + 1 << endl;
+				processExecutionStart = clock();
 			}
 		}
 
@@ -154,10 +170,13 @@ int main(int argc, char **argv) {
 
 	numProcessesRequired = atoi(argv[1]);
 
+	// Create process array with number of process required
 	pArray = new process[numProcessesRequired];
 
+	// Initialize processes with random mem and cycle requirements
 	createAllProcesses();
 	
+	// Simulate the memory allocation
 	simulateProcesses();
 
 	// Cleanup
