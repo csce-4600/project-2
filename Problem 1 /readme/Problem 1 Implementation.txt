@@ -1,0 +1,14 @@
+Problem 1 Implementation 
+========================
+
+1. Program generates required amount of processes and initializes each process with random memory and cycle requirements (uses normal distribution for randomization)
+
+2. simulateProcess function simulates the arrival of processes in the queue with incremental cycle counts.
+
+3. When each process simulates the execution, the program uses malloc() call to allocate memory required.
+
+4. It also uses usleep function to simulate program execution time. Note usleep(1000) = 1 milisecond. And its multiplied by the number of cycles in each process.
+
+5. Prints out the execution time for allocation/deallocation at the end of each process execution.
+
+6. At the end of process execution the program will display the total time it took to execute all processes.

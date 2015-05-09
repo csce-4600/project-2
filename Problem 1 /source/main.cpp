@@ -148,7 +148,7 @@ int simulateProcesses() {
 					cout << "Error allocating memory for the process with pid " << pArray[indexOfCurrentlyExecutingProcess].processId << endl;
 					return -1; // return error code -1(not enough memory for the first process)
 				}
-				cout << "Starting execution of PID " << pArray[indexOfCurrentlyExecutingProcess].processId << " in cycle " << currentCycle + 1 << endl;
+				cout << "Starting execution of PID " << pArray[indexOfCurrentlyExecutingProcess].processId << " in cycle " << currentCycle + 1 << " with a memory footprint of " << pArray[indexOfCurrentlyExecutingProcess].memFootprint << endl;
 			}
 		}
 
