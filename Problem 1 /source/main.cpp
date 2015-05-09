@@ -3,6 +3,7 @@
 #include <cstdio>
 #include <ctime>
 #include <unistd.h>
+#include <chrono>
 
 using namespace std;
 
@@ -83,12 +84,13 @@ int simulateProcesses() {
 	int availableMemory = 10240; 	// the amount of available memory remaining in KB; at first, we have 10Mb = 10 * 1024 KB = 10240KB
 	int indexOfCurrentlyExecutingProcess = 0; 
 	void *allocatedMemory = NULL;
-	clock_t processExecutionStart, processExecutionEnd; // used to measure how much time a process spends.
+	auto memAllocStart = chrono::high_resolution_clock::now();
+	auto totalTimeStart = chrono::high_resolution_clock::now();
 
-	clock_t start = clock();
 	cyclesUntilProcFinish = pArray[0].cpuCycles;
 	if (pArray[0].memFootprint <= availableMemory) { // check to see that we have enough memory,
-		
+		// Using high resolution clock as Joseph mentioned
+		memAllocStart = chrono::high_resolution_clock::now();
 		allocatedMemory = malloc(pArray[0].memFootprint * 1024); // beacuse memFootPrint represents the amount of memory in KB and 1KB = 1024B
 		if (allocatedMemory == NULL) {
 			cout << "Error allocating memory for the process with pid " << pArray[0].processId << endl;
@@ -96,7 +98,6 @@ int simulateProcesses() {
 		}
 		availableMemory -= pArray[0].memFootprint;
 		indexOfCurrentlyExecutingProcess = 0;
-		processExecutionStart = clock(); // the first process has started executing
 	}
 	else {
 		cout << "Error allocating memory for the first process with pid " << pArray[0].processId << endl;
@@ -104,34 +105,34 @@ int simulateProcesses() {
 	}
 
 	while (flagRunSimulation == true) {
-		usleep(1000); // sleep 1 milisecond per cycle
+
 		if (currentCycle % 50 == 0 && ((currentCycle / 50) < numProcessesRequired)) {
 			int numberOfArrivingProcess = currentCycle / 50; // the number of the process that has arrived
 			cout << "PID " << pArray[numberOfArrivingProcess].processId << " arrived at cycle " << currentCycle << ". It has a memory footprint of " <<
 				pArray[numberOfArrivingProcess].memFootprint << " and it requires " << pArray[numberOfArrivingProcess].cpuCycles << " cycles to execute" << endl;
 			cout << "Currently executing PID " << pArray[indexOfCurrentlyExecutingProcess].processId << endl;
 		}
+
 		++currentCycle;
 		--cyclesUntilProcFinish;
+
 		if (cyclesUntilProcFinish == 0) {
+
 			free(allocatedMemory);
+			auto memAllocEnd = chrono::high_resolution_clock::now();
+
 			allocatedMemory = NULL;
 			availableMemory += pArray[indexOfCurrentlyExecutingProcess].memFootprint; // retrieve memory
-			processExecutionEnd = clock();
-			processExecutionEnd += pArray[indexOfCurrentlyExecutingProcess].cpuCycles * (CLOCKS_PER_SEC / 1000.0);// for the sleeping
-			double processExecTime = (double)(processExecutionEnd - processExecutionStart) / CLOCKS_PER_SEC;
 
-			cout << ">> PID " << pArray[indexOfCurrentlyExecutingProcess].processId << " finished executing in cycle " << currentCycle << ". Execution time: " << processExecTime << " seconds.\n\n";
+			cout << ">> PID " << pArray[indexOfCurrentlyExecutingProcess].processId << " finished executing in cycle " << currentCycle << ". Execution time for malloc and free: " << chrono::duration_cast<chrono::nanoseconds>(memAllocEnd - memAllocStart).count() << " nanoseconds\n\n";
 
 			if (indexOfCurrentlyExecutingProcess == (numProcessesRequired - 1)) {
-				clock_t end = clock();
-				end += currentCycle* (CLOCKS_PER_SEC / 1000.0);// for the sleeping
-				double systemTime = (double)(end - start) / CLOCKS_PER_SEC;
-
-				cout << "Total system time: " << systemTime << " seconds" << endl;
+				auto totalTimeEnd = chrono::high_resolution_clock::now();
+				cout << "Total allocation time using malloc: " << chrono::duration_cast<chrono::nanoseconds>(totalTimeEnd - totalTimeStart).count() << " nanoseconds" << endl;
 				cout << "Number of processor cycles required to compute all the processes: " << currentCycle << endl;
 				flagRunSimulation = false;
 			}
+
 			else { // the currently executing project has finished, and the next process from the waiting queue must start
 				indexOfCurrentlyExecutingProcess++;
 				cyclesUntilProcFinish = pArray[indexOfCurrentlyExecutingProcess].cpuCycles;
@@ -148,7 +149,6 @@ int simulateProcesses() {
 					return -1; // return error code -1(not enough memory for the first process)
 				}
 				cout << "Starting execution of PID " << pArray[indexOfCurrentlyExecutingProcess].processId << " in cycle " << currentCycle + 1 << endl;
-				processExecutionStart = clock();
 			}
 		}
 
