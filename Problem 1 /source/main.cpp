@@ -131,7 +131,7 @@ int simulateProcesses() {
 
 			if (indexOfCurrentlyExecutingProcess == (numProcessesRequired - 1)) {
 				auto totalTimeEnd = chrono::high_resolution_clock::now();
-				cout << "Total allocation time using malloc: " << (chrono::duration_cast<chrono::nanoseconds>(totalTimeEnd - totalTimeStart).count()) / (sleepTime * numProcessesRequired) << " nanoseconds" << endl;
+				cout << "Total allocation time using malloc: " << (chrono::duration_cast<chrono::nanoseconds>(totalTimeEnd - totalTimeStart).count()) / sleepTime << " nanoseconds" << endl;
 				cout << "Number of processor cycles required to compute all the processes: " << currentCycle << endl;
 				flagRunSimulation = false;
 			}
