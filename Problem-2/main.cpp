@@ -81,6 +81,16 @@ void createAllProcesses() {
 		pArray[i] = createProcess();
 
 }
+void sleepNanoSeconds(int sleepTime)
+{
+	auto sleepStart = chrono::high_resolution_clock::now();
+	int sleepedNanoSeconds = 0;
+	do
+	{
+		sleepedNanoSeconds = chrono::duration_cast<chrono::nanoseconds>(chrono::high_resolution_clock::now() - sleepStart).count();
+	}
+	while(sleepedNanoSeconds < sleepTime);
+}
 
 int simulateProcesses() {
 
@@ -96,7 +106,6 @@ int simulateProcesses() {
 	cyclesUntilProcFinish = pArray[0].cpuCycles;
 	if (pArray[0].memFootprint <= availableMemory) { // check to see that we have enough memory,
 		// Using high resolution clock as Joseph mentioned
-		memAllocStart = chrono::high_resolution_clock::now();
 		allocatedMemory = mem.my_malloc(pArray[0].memFootprint * 1024); // beacuse memFootPrint represents the amount of memory in KB and 1KB = 1024B
 		if (allocatedMemory == NULL) {
 			cout << "Error allocating memory for the process with pid " << pArray[0].processId << endl;
@@ -126,18 +135,19 @@ int simulateProcesses() {
 
 			mem.my_free(allocatedMemory);
 			auto memAllocEnd = chrono::high_resolution_clock::now();
-			// 1000 = milisecond
-			int sleepTime = 1000 * pArray[indexOfCurrentlyExecutingProcess].cpuCycles;
-			usleep(sleepTime);
+			// 1000000 = milisecond
+			int sleepTime = 1000000 * pArray[indexOfCurrentlyExecutingProcess].cpuCycles;
+			//usleep(sleepTime);
+			sleepNanoSeconds(sleepTime);
 
 			allocatedMemory = NULL;
 			availableMemory += pArray[indexOfCurrentlyExecutingProcess].memFootprint; // retrieve memory
 
-			cout << ">> PID " << pArray[indexOfCurrentlyExecutingProcess].processId << " finished executing in cycle " << currentCycle << ". Execution time for malloc and free: " << chrono::duration_cast<chrono::nanoseconds>(memAllocEnd - memAllocStart).count()  / 1000 << " nanoseconds\n\n";
+			cout << ">> PID " << pArray[indexOfCurrentlyExecutingProcess].processId << " finished executing in cycle " << currentCycle << ". Execution time for malloc and free: " << chrono::duration_cast<chrono::nanoseconds>(memAllocEnd - memAllocStart).count()  << " nanoseconds\n\n";
 
 			if (indexOfCurrentlyExecutingProcess == (numProcessesRequired - 1)) {
 				auto totalTimeEnd = chrono::high_resolution_clock::now();
-				cout << "Total execution time: " << (chrono::duration_cast<chrono::nanoseconds>(totalTimeEnd - totalTimeStart).count()) << " nanoseconds" << endl;
+				cout << "Total program execution time: " << (chrono::duration_cast<chrono::nanoseconds>(totalTimeEnd - totalTimeStart).count()) << " nanoseconds" << endl;
 				cout << "Number of processor cycles required to compute all the processes: " << currentCycle << endl;
 				flagRunSimulation = false;
 			}
@@ -146,6 +156,7 @@ int simulateProcesses() {
 				indexOfCurrentlyExecutingProcess++;
 				cyclesUntilProcFinish = pArray[indexOfCurrentlyExecutingProcess].cpuCycles;
 				if (pArray[indexOfCurrentlyExecutingProcess].memFootprint <= availableMemory) { // check to see that we have enough memory,
+					memAllocStart = chrono::high_resolution_clock::now(); // timing needs to be restarted for new process
 					allocatedMemory = mem.my_malloc(pArray[indexOfCurrentlyExecutingProcess].memFootprint * 1024); // beacuse memFootPrint represents the amount of memory in KB and 1KB = 1024B
 					if (allocatedMemory == NULL) {
 						cout << "Error allocating memory for the process with pid " << pArray[indexOfCurrentlyExecutingProcess].processId << endl;
