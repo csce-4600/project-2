@@ -137,11 +137,11 @@ int simulateProcesses() {
 			allocatedMemory = NULL;
 			availableMemory += pArray[indexOfCurrentlyExecutingProcess].memFootprint; // retrieve memory
 
-			cout << ">> PID " << pArray[indexOfCurrentlyExecutingProcess].processId << " finished executing in cycle " << currentCycle << ". Execution time for malloc and free: " << chrono::duration_cast<chrono::nanoseconds>(memAllocEnd - memAllocStart).count()  / 1000 << " nanoseconds\n\n";
+			cout << ">> PID " << pArray[indexOfCurrentlyExecutingProcess].processId << " finished executing in cycle " << currentCycle << ". Execution time for malloc and free: " << chrono::duration_cast<chrono::nanoseconds>(memAllocEnd - memAllocStart).count()  << " nanoseconds\n\n";
 
 			if (indexOfCurrentlyExecutingProcess == (numProcessesRequired - 1)) {
 				auto totalTimeEnd = chrono::high_resolution_clock::now();
-				cout << "Total execution time: " << (chrono::duration_cast<chrono::nanoseconds>(totalTimeEnd - totalTimeStart).count()) << " nanoseconds" << endl;
+				cout << "Total program execution time: " << (chrono::duration_cast<chrono::nanoseconds>(totalTimeEnd - totalTimeStart).count()) << " nanoseconds" << endl;
 				cout << "Number of processor cycles required to compute all the processes: " << currentCycle << endl;
 				flagRunSimulation = false;
 			}
